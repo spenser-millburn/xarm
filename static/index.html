@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xArm6 Control Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: #09090b;
+            min-height: 100vh;
+            padding: 20px;
+            color: #fafafa;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #fafafa;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: #3f3f46;
+        }
+
+        .card h2 {
+            color: #fafafa;
+            margin-bottom: 20px;
+            font-size: 1.25em;
+            font-weight: 600;
+            border-bottom: 1px solid #27272a;
+            padding-bottom: 12px;
+            letter-spacing: -0.025em;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .status-item {
+            background: #09090b;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid #27272a;
+        }
+
+        .status-item label {
+            font-weight: 500;
+            color: #71717a;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-item .value {
+            font-size: 1.05em;
+            color: #fafafa;
+            font-weight: 500;
+        }
+
+        .status-warning {
+            border-left-color: #eab308;
+        }
+
+        .status-error {
+            border-left-color: #ef4444;
+        }
+
+        .status-ok {
+            border-left-color: #22c55e;
+        }
+
+        button {
+            background: transparent;
+            color: #fafafa;
+            border: 1px solid #3f3f46;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875em;
+            font-weight: 500;
+            transition: all 0.2s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #27272a;
+            border-color: #52525b;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.danger {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        button.danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #f87171;
+        }
+
+        button.success {
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+
+        button.success:hover {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: #4ade80;
+        }
+
+        button.warning {
+            border-color: #eab308;
+            color: #eab308;
+        }
+
+        button.warning:hover {
+            background: rgba(234, 179, 8, 0.1);
+            border-color: #facc15;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #27272a;
+            border-radius: 6px;
+            font-size: 0.875em;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+            background: #09090b;
+            color: #fafafa;
+        }
+
+        input[type="number"]:hover {
+            border-color: #3f3f46;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #71717a;
+            box-shadow: 0 0 0 3px rgba(113, 113, 122, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a1a1aa;
+            font-weight: 500;
+            font-size: 0.875em;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #18181b;
+            color: #fafafa;
+            padding: 14px 18px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            border: 1px solid #27272a;
+            display: none;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            font-size: 0.875em;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        .notification.success {
+            border-left: 3px solid #22c55e;
+        }
+
+        .notification.error {
+            border-left: 3px solid #ef4444;
+        }
+
+        .position-display {
+            background: #09090b;
+            padding: 14px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.8125em;
+            color: #a1a1aa;
+            border: 1px solid #27272a;
+            line-height: 1.6;
+        }
+
+        .joint-inputs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .joint-input {
+            margin-bottom: 0;
+        }
+
+        .joint-input label {
+            font-size: 0.8em;
+        }
+
+        .joint-input input {
+            margin-bottom: 0;
+        }
+
+        .warning-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .warning-item {
+            background: #09090b;
+            padding: 14px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .warning-item.error {
+            border-left-color: #ef4444;
+        }
+
+        .warning-item.warning {
+            border-left-color: #eab308;
+        }
+
+        .warning-item.info {
+            border-left-color: #3b82f6;
+        }
+
+        .warning-content {
+            flex: 1;
+        }
+
+        .warning-type {
+            font-size: 0.6875em;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 5px;
+        }
+
+        .warning-message {
+            color: #fafafa;
+            font-size: 0.875em;
+        }
+
+        .warning-code {
+            background: #18181b;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.8125em;
+            color: #71717a;
+            border: 1px solid #27272a;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+
+        .empty-warnings {
+            text-align: center;
+            color: #52525b;
+            padding: 20px;
+            font-size: 0.875em;
+        }
+
+        button.filled {
+            background: #fafafa;
+            color: #09090b;
+            border-color: #fafafa;
+        }
+
+        button.filled:hover {
+            background: #e4e4e7;
+            border-color: #e4e4e7;
+        }
+
+        button.success.filled {
+            background: #22c55e;
+            color: #09090b;
+            border-color: #22c55e;
+        }
+
+        button.success.filled:hover {
+            background: #16a34a;
+            border-color: #16a34a;
+            color: #09090b;
+        }
+
+        button.danger.filled {
+            background: #ef4444;
+            color: #ffffff;
+            border-color: #ef4444;
+        }
+
+        button.danger.filled:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: #ffffff;
+        }
+
+        .warning-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .warning-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .warning-list::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 3px;
+        }
+
+        .warning-list::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: #71717a;
+            cursor: pointer;
+            font-size: 0.875em;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            margin-bottom: -1px;
+        }
+
+        .tab:hover {
+            color: #a1a1aa;
+        }
+
+        .tab.active {
+            color: #fafafa;
+            border-bottom-color: #fafafa;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid-visual {
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grid-container {
+            display: inline-grid;
+            gap: 4px;
+        }
+
+        .grid-cell {
+            width: 40px;
+            height: 40px;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
+            color: #52525b;
+        }
+
+        .grid-cell:hover {
+            background: #27272a;
+            border-color: #3f3f46;
+        }
+
+        .grid-cell.current {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: #fafafa;
+        }
+
+        .grid-settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .canvas-container {
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: 6px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+        }
+
+        #workspace-canvas {
+            border: 1px solid #27272a;
+            background: #18181b;
+            border-radius: 4px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8125em;
+            color: #a1a1aa;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-square {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>xArm6 Control Panel</h1>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('manual')">Manual Control</button>
+            <button class="tab" onclick="switchTab('pickplace')">Pick & Place</button>
+        </div>
+
+        <div id="manual-tab" class="tab-content active">
+        <div class="grid">
+            <!-- Status Card -->
+            <div class="card">
+                <h2>Status</h2>
+                <div class="status-grid">
+                    <div class="status-item" id="status-connected">
+                        <label>Connection</label>
+                        <div class="value">Disconnected</div>
+                    </div>
+                    <div class="status-item" id="status-state">
+                        <label>State</label>
+                        <div class="value">Unknown</div>
+                    </div>
+                    <div class="status-item" id="status-mode">
+                        <label>Mode</label>
+                        <div class="value">-</div>
+                    </div>
+                    <div class="status-item" id="status-moving">
+                        <label>Moving</label>
+                        <div class="value">No</div>
+                    </div>
+                </div>
+                <div class="button-group" style="margin-top: 20px;">
+                    <button class="success" onclick="connectRobot()">Connect</button>
+                    <button onclick="updateStatus()">Refresh</button>
+                </div>
+            </div>
+
+            <!-- Control Card -->
+            <div class="card">
+                <h2>Control</h2>
+                <button class="success filled" onclick="enableMotion()">Enable Motion</button>
+                <button class="warning" onclick="disableMotion()">Disable Motion</button>
+                <button onclick="moveHome()">Move to Home</button>
+                <button onclick="clearErrors()">Clear Errors/Warnings</button>
+                <button class="danger filled" onclick="emergencyStop()">EMERGENCY STOP</button>
+            </div>
+
+            <!-- Gripper Card -->
+            <div class="card">
+                <h2>Gripper</h2>
+                <button class="success" onclick="openGripper()">Open Gripper</button>
+                <button class="warning" onclick="closeGripper()">Close Gripper</button>
+            </div>
+
+            <!-- Warnings & Errors Card -->
+            <div class="card">
+                <h2>Warnings & Errors</h2>
+                <div class="warning-list" id="warning-list">
+                    <div class="empty-warnings">No active warnings or errors</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Position Control Card -->
+            <div class="card">
+                <h2>Position Control (mm, degrees)</h2>
+                <div class="position-display" id="current-position">
+                    Current Position:<br>
+                    X: - | Y: - | Z: -<br>
+                    Roll: - | Pitch: - | Yaw: -
+                </div>
+                <div class="input-group">
+                    <label>X (mm)</label>
+                    <input type="number" id="pos-x" value="200" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Y (mm)</label>
+                    <input type="number" id="pos-y" value="0" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Z (mm)</label>
+                    <input type="number" id="pos-z" value="200" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Roll (degrees)</label>
+                    <input type="number" id="pos-roll" value="180" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Pitch (degrees)</label>
+                    <input type="number" id="pos-pitch" value="0" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Yaw (degrees)</label>
+                    <input type="number" id="pos-yaw" value="0" step="1">
+                </div>
+                <div class="input-group">
+                    <label>Speed (mm/s)</label>
+                    <input type="number" id="pos-speed" value="100" step="10" min="1" max="500">
+                </div>
+                <button class="warning" onclick="loadCurrentPosition()">Load Current Position</button>
+                <button onclick="moveToPosition()">Move to Position</button>
+            </div>
+
+            <!-- Joint Control Card -->
+            <div class="card">
+                <h2>Joint Control (degrees)</h2>
+                <div class="position-display" id="current-joints">
+                    Current Joint Angles:<br>
+                    J1: - | J2: - | J3: -<br>
+                    J4: - | J5: - | J6: -
+                </div>
+                <div class="joint-inputs">
+                    <div class="input-group joint-input">
+                        <label>Joint 1</label>
+                        <input type="number" id="joint-1" value="0" step="1">
+                    </div>
+                    <div class="input-group joint-input">
+                        <label>Joint 2</label>
+                        <input type="number" id="joint-2" value="0" step="1">
+                    </div>
+                    <div class="input-group joint-input">
+                        <label>Joint 3</label>
+                        <input type="number" id="joint-3" value="0" step="1">
+                    </div>
+                    <div class="input-group joint-input">
+                        <label>Joint 4</label>
+                        <input type="number" id="joint-4" value="0" step="1">
+                    </div>
+                    <div class="input-group joint-input">
+                        <label>Joint 5</label>
+                        <input type="number" id="joint-5" value="0" step="1">
+                    </div>
+                    <div class="input-group joint-input">
+                        <label>Joint 6</label>
+                        <input type="number" id="joint-6" value="0" step="1">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Speed (deg/s)</label>
+                    <input type="number" id="joint-speed" value="50" step="5" min="1" max="180">
+                </div>
+                <button class="warning" onclick="loadCurrentJoints()">Load Current Joints</button>
+                <button onclick="moveJoints()">Move Joints</button>
+            </div>
+        </div>
+        </div>
+
+        <div id="pickplace-tab" class="tab-content">
+            <div class="grid">
+                <!-- Live 2D Workspace View -->
+                <div class="card" style="grid-column: 1 / -1;">
+                    <h2>Live Workspace View (Top-Down)</h2>
+                    <div class="canvas-container">
+                        <canvas id="workspace-canvas" width="600" height="400"></canvas>
+                    </div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: #ef4444;"></div>
+                            <span>Robot Position</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-square" style="border: 2px solid #3b82f6; background: transparent;"></div>
+                            <span>Selected Grid Cell</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-square" style="border: 1px solid #52525b; background: #27272a;"></div>
+                            <span>Grid Cells</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background: #22c55e;"></div>
+                            <span>Origin Point</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid Selector -->
+                <div class="card">
+                    <h2>Grid Selector</h2>
+                    <div class="grid-visual">
+                        <div id="grid-display" class="grid-container"></div>
+                    </div>
+                </div>
+
+                <!-- Grid Settings -->
+                <div class="card">
+                    <h2>Grid Settings</h2>
+                    <div class="grid-settings">
+                        <div class="input-group">
+                            <label>Rows</label>
+                            <input type="number" id="grid-rows" value="3" min="1" max="10" onchange="updateGridDisplay(); drawWorkspace()">
+                        </div>
+                        <div class="input-group">
+                            <label>Columns</label>
+                            <input type="number" id="grid-cols" value="4" min="1" max="10" onchange="updateGridDisplay(); drawWorkspace()">
+                        </div>
+                        <div class="input-group">
+                            <label>Origin X (mm)</label>
+                            <input type="number" id="grid-origin-x" value="200" step="10" onchange="drawWorkspace()">
+                        </div>
+                        <div class="input-group">
+                            <label>Origin Y (mm)</label>
+                            <input type="number" id="grid-origin-y" value="-100" step="10" onchange="drawWorkspace()">
+                        </div>
+                        <div class="input-group">
+                            <label>Origin Z (mm)</label>
+                            <input type="number" id="grid-origin-z" value="50" step="10">
+                        </div>
+                        <div class="input-group">
+                            <label>Spacing X (mm)</label>
+                            <input type="number" id="grid-spacing-x" value="50" step="5" onchange="drawWorkspace()">
+                        </div>
+                        <div class="input-group">
+                            <label>Spacing Y (mm)</label>
+                            <input type="number" id="grid-spacing-y" value="50" step="5" onchange="drawWorkspace()">
+                        </div>
+                        <div class="input-group">
+                            <label>Safe Height (mm)</label>
+                            <input type="number" id="grid-height" value="100" step="10">
+                        </div>
+                    </div>
+                    <button onclick="setOriginToCurrent()">Set Origin to Current Position</button>
+                </div>
+
+                <!-- Pick & Place Actions -->
+                <div class="card">
+                    <h2>Actions</h2>
+                    <div class="input-group">
+                        <label>Speed (mm/s)</label>
+                        <input type="number" id="grid-speed" value="100" min="10" max="500" step="10">
+                    </div>
+                    <button onclick="moveToGridPosition()">Move to Selected</button>
+                    <button class="success" onclick="pickAtPosition()">Pick at Selected</button>
+                    <button class="warning" onclick="placeAtPosition()">Place at Selected</button>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #27272a;">
+                        <div style="color: #71717a; font-size: 0.75em; margin-bottom: 8px; text-transform: uppercase;">Selected Position</div>
+                        <div style="color: #fafafa; font-size: 0.875em;" id="selected-position">Row: 0, Col: 0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        const API_BASE = '';
+
+        // xArm Error Code Descriptions
+        const ERROR_CODES = {
+            0: { name: "Joint Communication Error", action: "Restart the xArm with the Emergency Stop Button on the Control Box. If multiple reboots do not work, contact technical support." },
+            10: { name: "Abnormal Current Detection", action: "Restart the xArm with the Emergency Stop Button on the Control Box." },
+            11: { name: "Joint Overcurrent", action: "Restart the xArm with the Emergency Stop Button on the Control Box." },
+            12: { name: "Joint Overspeed", action: "Restart the xArm with the Emergency Stop Button on the Control Box." },
+            14: { name: "Position Command Overlimit", action: "Restart the xArm with the Emergency Stop Button on the Control Box." },
+            15: { name: "Joints Overheat", action: "Stop running and restart the xArm after it cools down." },
+            16: { name: "Encoder Initialization Error", action: "Ensure no external force pushes the robot arm when powered on. Restart with Emergency Stop Button." },
+            17: { name: "Single-turn Encoder Error", action: "Restart the xArm with the Emergency Stop Button on the Control Box." },
+            18: { name: "Multi-turn Encoder Error", action: "Click Clear Error, then power off the Control Box, wait 5 seconds and power on again." },
+            19: { name: "Low Battery Voltage", action: "Contact technical support." },
+            20: { name: "Driver IC Hardware Error", action: "Re-enable the robot." },
+            21: { name: "Driver IC Initialization Error", action: "Restart the xArm with the Emergency Stop Button on the Control Box." },
+            22: { name: "Encoder Configuration Error", action: "Contact technical support." },
+            23: { name: "Large Motor Position Deviation", action: "Check if xArm movement is blocked, payload exceeds rated limit, or acceleration value is too large." },
+            26: { name: "Joint Positive Overrun", action: "Check if the joint angle value is too large." },
+            27: { name: "Joint Negative Overrun", action: "Check if the joint angle is too large. Click Clear Error and manually rotate joint to allowed range." },
+            28: { name: "Joint Commands Error", action: "The xArm is not enabled. Click Enable Robot." },
+            33: { name: "Drive Overloaded", action: "Make sure the payload is within the rated load." },
+            34: { name: "Motor Overload", action: "Make sure the payload is within the rated load." },
+            35: { name: "Motor Type Error", action: "Restart the xArm with the Emergency Stop Button on the Control Box." },
+            36: { name: "Driver Type Error", action: "Restart the xArm with the Emergency Stop Button on the Control Box." },
+            39: { name: "Joint Overvoltage", action: "Reduce the acceleration value in the Motion Settings." },
+            40: { name: "Joint Undervoltage", action: "Reduce the acceleration value. Check if emergency stop switch is released." },
+            49: { name: "EEPROM Read and Write Error", action: "Restart the xArm with the Emergency Stop Button on the Control Box." },
+            52: { name: "Initialization of Motor Angle Error", action: "Restart the xArm with the Emergency Stop Button on the Control Box." }
+        };
+
+        const WARN_CODES = {
+            1: { name: "Joint Communication Warning", action: "Monitor the robot. Restart if issue persists." },
+            11: { name: "Collision Detection", action: "Check for obstacles. Clear warning after ensuring workspace is safe." },
+            12: { name: "Joints Angle Exceeded", action: "Reduce joint angles to within safe range." },
+            13: { name: "Speed Exceeded", action: "Reduce movement speed." },
+            14: { name: "Planning Error", action: "Check target position is reachable." },
+            21: { name: "Pressure Sensor Communication Error", action: "Check sensor connection." },
+            22: { name: "Pressure Sensor Value Exception", action: "Check payload and mounting." },
+            23: { name: "End Module Communication Error", action: "Check end effector connection." },
+            24: { name: "Tool Coordinate System Calibration Error", action: "Recalibrate tool coordinate system." }
+        };
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+                const response = await fetch(API_BASE + endpoint, options);
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Request failed');
+                }
+                return data;
+            } catch (error) {
+                showNotification(error.message, 'error');
+                throw error;
+            }
+        }
+
+        async function connectRobot() {
+            try {
+                await apiCall('/api/connect', 'POST');
+                showNotification('Connected to xArm6', 'success');
+                updateStatus();
+            } catch (error) {
+                console.error('Connection failed:', error);
+            }
+        }
+
+        async function updateStatus() {
+            try {
+                const status = await apiCall('/api/status');
+
+                // Update connection status
+                const connectedEl = document.getElementById('status-connected');
+                connectedEl.className = status.connected ? 'status-item status-ok' : 'status-item status-error';
+                connectedEl.querySelector('.value').textContent = status.connected ? 'Connected' : 'Disconnected';
+
+                // Update state
+                const stateEl = document.getElementById('status-state');
+                const stateClass = status.state === 0 ? 'status-ok' : (status.state === 5 ? 'status-warning' : 'status-error');
+                stateEl.className = `status-item ${stateClass}`;
+                stateEl.querySelector('.value').textContent = status.state_name;
+
+                // Update mode
+                document.getElementById('status-mode').querySelector('.value').textContent = status.mode;
+
+                // Update moving status
+                document.getElementById('status-moving').querySelector('.value').textContent = status.is_moving ? 'Yes' : 'No';
+
+                // Update position display
+                if (status.position) {
+                    const pos = status.position;
+                    document.getElementById('current-position').innerHTML = `
+                        Current Position:<br>
+                        X: ${pos[0].toFixed(2)} | Y: ${pos[1].toFixed(2)} | Z: ${pos[2].toFixed(2)}<br>
+                        Roll: ${pos[3].toFixed(2)} | Pitch: ${pos[4].toFixed(2)} | Yaw: ${pos[5].toFixed(2)}
+                    `;
+                }
+
+                // Update joint angles display
+                if (status.joint_angles) {
+                    const joints = status.joint_angles;
+                    document.getElementById('current-joints').innerHTML = `
+                        Current Joint Angles:<br>
+                        J1: ${joints[0].toFixed(2)} | J2: ${joints[1].toFixed(2)} | J3: ${joints[2].toFixed(2)}<br>
+                        J4: ${joints[3].toFixed(2)} | J5: ${joints[4].toFixed(2)} | J6: ${joints[5].toFixed(2)}
+                    `;
+                }
+
+                // Update warnings and errors display
+                updateWarningsList(status);
+
+                // Update canvas visualization
+                updateCanvasFromStatus(status);
+            } catch (error) {
+                console.error('Status update failed:', error);
+            }
+        }
+
+        function updateWarningsList(status) {
+            const warningList = document.getElementById('warning-list');
+            const warnings = [];
+
+            // Check for errors
+            if (status.error_code && status.error_code !== 0) {
+                const errorInfo = ERROR_CODES[status.error_code];
+                if (errorInfo) {
+                    warnings.push({
+                        type: 'error',
+                        code: `S${status.error_code}`,
+                        name: errorInfo.name,
+                        message: errorInfo.name,
+                        action: errorInfo.action
+                    });
+                } else {
+                    warnings.push({
+                        type: 'error',
+                        code: `S${status.error_code}`,
+                        name: 'Unknown Error',
+                        message: `Error Code S${status.error_code}`,
+                        action: 'Power on again. If the problem persists after multiple reboots, contact technical support.'
+                    });
+                }
+            }
+
+            // Check for warnings
+            if (status.warn_code && status.warn_code !== 0) {
+                const warnInfo = WARN_CODES[status.warn_code];
+                if (warnInfo) {
+                    warnings.push({
+                        type: 'warning',
+                        code: `W${status.warn_code}`,
+                        name: warnInfo.name,
+                        message: warnInfo.name,
+                        action: warnInfo.action
+                    });
+                } else {
+                    warnings.push({
+                        type: 'warning',
+                        code: `W${status.warn_code}`,
+                        name: 'Unknown Warning',
+                        message: `Warning Code W${status.warn_code}`,
+                        action: 'Monitor the robot. Contact technical support if issue persists.'
+                    });
+                }
+            }
+
+            // Check state
+            if (status.state === 4) {
+                warnings.push({
+                    type: 'error',
+                    code: 'STATE',
+                    name: 'Error State',
+                    message: 'Robot is in error state',
+                    action: 'Check error codes above and follow recommended actions.'
+                });
+            } else if (status.state === 5) {
+                warnings.push({
+                    type: 'warning',
+                    code: 'STATE',
+                    name: 'Warning State',
+                    message: 'Robot has active warnings',
+                    action: 'Check warning codes above and follow recommended actions.'
+                });
+            } else if (status.state === 3) {
+                warnings.push({
+                    type: 'info',
+                    code: 'STATE',
+                    name: 'Stopped',
+                    message: 'Robot is stopped',
+                    action: 'Enable motion to continue operation.'
+                });
+            }
+
+            // Render warnings
+            if (warnings.length === 0) {
+                warningList.innerHTML = '<div class="empty-warnings">No active warnings or errors</div>';
+            } else {
+                warningList.innerHTML = warnings.map(w => `
+                    <div class="warning-item ${w.type}">
+                        <div class="warning-content">
+                            <div class="warning-type">${w.type.toUpperCase()}</div>
+                            <div class="warning-message">${w.message}</div>
+                            ${w.action ? `<div style="color: #71717a; font-size: 0.8125em; margin-top: 6px; line-height: 1.4;">${w.action}</div>` : ''}
+                        </div>
+                        <div class="warning-code">${w.code}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function enableMotion() {
+            try {
+                await apiCall('/api/motion/enable', 'POST');
+                showNotification('Motion enabled', 'success');
+                updateStatus();
+            } catch (error) {
+                console.error('Enable motion failed:', error);
+            }
+        }
+
+        async function disableMotion() {
+            try {
+                await apiCall('/api/motion/disable', 'POST');
+                showNotification('Motion disabled', 'success');
+                updateStatus();
+            } catch (error) {
+                console.error('Disable motion failed:', error);
+            }
+        }
+
+        async function moveHome() {
+            try {
+                showNotification('Moving to home position...', 'success');
+                await apiCall('/api/move/home', 'POST');
+                showNotification('Reached home position', 'success');
+                updateStatus();
+            } catch (error) {
+                console.error('Move home failed:', error);
+            }
+        }
+
+        async function emergencyStop() {
+            try {
+                await apiCall('/api/stop', 'POST');
+                showNotification('Emergency stop activated', 'error');
+                updateStatus();
+            } catch (error) {
+                console.error('Emergency stop failed:', error);
+            }
+        }
+
+        async function clearErrors() {
+            try {
+                await apiCall('/api/clear/errors', 'POST');
+                showNotification('Errors and warnings cleared', 'success');
+                updateStatus();
+            } catch (error) {
+                console.error('Clear errors failed:', error);
+            }
+        }
+
+        async function moveToPosition() {
+            const position = {
+                x: parseFloat(document.getElementById('pos-x').value),
+                y: parseFloat(document.getElementById('pos-y').value),
+                z: parseFloat(document.getElementById('pos-z').value),
+                roll: parseFloat(document.getElementById('pos-roll').value),
+                pitch: parseFloat(document.getElementById('pos-pitch').value),
+                yaw: parseFloat(document.getElementById('pos-yaw').value),
+                speed: parseInt(document.getElementById('pos-speed').value),
+                wait: false
+            };
+
+            try {
+                showNotification('Moving to position...', 'success');
+                await apiCall('/api/move/position', 'POST', position);
+                showNotification('Move command sent', 'success');
+                setTimeout(updateStatus, 500);
+            } catch (error) {
+                console.error('Move to position failed:', error);
+            }
+        }
+
+        async function moveJoints() {
+            const angles = [
+                parseFloat(document.getElementById('joint-1').value),
+                parseFloat(document.getElementById('joint-2').value),
+                parseFloat(document.getElementById('joint-3').value),
+                parseFloat(document.getElementById('joint-4').value),
+                parseFloat(document.getElementById('joint-5').value),
+                parseFloat(document.getElementById('joint-6').value)
+            ];
+
+            const speed = parseInt(document.getElementById('joint-speed').value);
+
+            try {
+                showNotification('Moving joints...', 'success');
+                await apiCall('/api/move/joints', 'POST', { angles, speed, wait: false });
+                showNotification('Move command sent', 'success');
+                setTimeout(updateStatus, 500);
+            } catch (error) {
+                console.error('Move joints failed:', error);
+            }
+        }
+
+        async function openGripper() {
+            try {
+                showNotification('Opening gripper...', 'success');
+                await apiCall('/api/gripper/open', 'POST');
+                showNotification('Gripper opened', 'success');
+            } catch (error) {
+                console.error('Open gripper failed:', error);
+            }
+        }
+
+        async function closeGripper() {
+            try {
+                showNotification('Closing gripper...', 'success');
+                await apiCall('/api/gripper/close', 'POST');
+                showNotification('Gripper closed', 'success');
+            } catch (error) {
+                console.error('Close gripper failed:', error);
+            }
+        }
+
+        async function loadCurrentPosition() {
+            try {
+                const status = await apiCall('/api/status');
+                if (status.position && status.position.length >= 6) {
+                    document.getElementById('pos-x').value = status.position[0].toFixed(2);
+                    document.getElementById('pos-y').value = status.position[1].toFixed(2);
+                    document.getElementById('pos-z').value = status.position[2].toFixed(2);
+                    document.getElementById('pos-roll').value = status.position[3].toFixed(2);
+                    document.getElementById('pos-pitch').value = status.position[4].toFixed(2);
+                    document.getElementById('pos-yaw').value = status.position[5].toFixed(2);
+                    showNotification('Current position loaded', 'success');
+                } else {
+                    showNotification('Position data not available', 'error');
+                }
+            } catch (error) {
+                console.error('Load current position failed:', error);
+            }
+        }
+
+        async function loadCurrentJoints() {
+            try {
+                const status = await apiCall('/api/status');
+                if (status.joint_angles && status.joint_angles.length >= 6) {
+                    document.getElementById('joint-1').value = status.joint_angles[0].toFixed(2);
+                    document.getElementById('joint-2').value = status.joint_angles[1].toFixed(2);
+                    document.getElementById('joint-3').value = status.joint_angles[2].toFixed(2);
+                    document.getElementById('joint-4').value = status.joint_angles[3].toFixed(2);
+                    document.getElementById('joint-5').value = status.joint_angles[4].toFixed(2);
+                    document.getElementById('joint-6').value = status.joint_angles[5].toFixed(2);
+                    showNotification('Current joint angles loaded', 'success');
+                } else {
+                    showNotification('Joint angle data not available', 'error');
+                }
+            } catch (error) {
+                console.error('Load current joints failed:', error);
+            }
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+
+            // Initialize grid if switching to pickplace
+            if (tabName === 'pickplace') {
+                updateGridDisplay();
+                drawWorkspace();
+            }
+        }
+
+        // Pick and Place functionality
+        let selectedRow = 0;
+        let selectedCol = 0;
+
+        function updateGridDisplay() {
+            const rows = parseInt(document.getElementById('grid-rows').value);
+            const cols = parseInt(document.getElementById('grid-cols').value);
+            const gridDisplay = document.getElementById('grid-display');
+
+            gridDisplay.style.gridTemplateColumns = `repeat(${cols}, 40px)`;
+            gridDisplay.style.gridTemplateRows = `repeat(${rows}, 40px)`;
+
+            gridDisplay.innerHTML = '';
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.textContent = `${r},${c}`;
+                    cell.onclick = () => selectGridPosition(r, c);
+
+                    if (r === selectedRow && c === selectedCol) {
+                        cell.classList.add('current');
+                    }
+
+                    gridDisplay.appendChild(cell);
+                }
+            }
+        }
+
+        function selectGridPosition(row, col) {
+            selectedRow = row;
+            selectedCol = col;
+            updateGridDisplay();
+            drawWorkspace();
+            document.getElementById('selected-position').textContent = `Row: ${row}, Col: ${col}`;
+        }
+
+        function getGridConfig() {
+            return {
+                row: selectedRow,
+                col: selectedCol,
+                origin_x: parseFloat(document.getElementById('grid-origin-x').value),
+                origin_y: parseFloat(document.getElementById('grid-origin-y').value),
+                origin_z: parseFloat(document.getElementById('grid-origin-z').value),
+                spacing_x: parseFloat(document.getElementById('grid-spacing-x').value),
+                spacing_y: parseFloat(document.getElementById('grid-spacing-y').value),
+                height: parseFloat(document.getElementById('grid-height').value),
+                speed: parseInt(document.getElementById('grid-speed').value)
+            };
+        }
+
+        async function moveToGridPosition() {
+            try {
+                const config = getGridConfig();
+                showNotification(`Moving to grid position [${config.row}, ${config.col}]...`, 'success');
+                const result = await apiCall('/api/pickplace/grid', 'POST', config);
+                showNotification(`Moved to [${config.row}, ${config.col}]`, 'success');
+            } catch (error) {
+                console.error('Move to grid position failed:', error);
+            }
+        }
+
+        async function pickAtPosition() {
+            try {
+                const config = getGridConfig();
+                showNotification(`Picking at [${config.row}, ${config.col}]...`, 'success');
+                await apiCall('/api/pickplace/pick', 'POST', config);
+                showNotification(`Pick completed at [${config.row}, ${config.col}]`, 'success');
+            } catch (error) {
+                console.error('Pick failed:', error);
+            }
+        }
+
+        async function placeAtPosition() {
+            try {
+                const config = getGridConfig();
+                showNotification(`Placing at [${config.row}, ${config.col}]...`, 'success');
+                await apiCall('/api/pickplace/place', 'POST', config);
+                showNotification(`Place completed at [${config.row}, ${config.col}]`, 'success');
+            } catch (error) {
+                console.error('Place failed:', error);
+            }
+        }
+
+        async function setOriginToCurrent() {
+            try {
+                const status = await apiCall('/api/status');
+                if (status.position && status.position.length >= 3) {
+                    document.getElementById('grid-origin-x').value = status.position[0].toFixed(2);
+                    document.getElementById('grid-origin-y').value = status.position[1].toFixed(2);
+                    document.getElementById('grid-origin-z').value = status.position[2].toFixed(2);
+                    drawWorkspace();
+                    showNotification('Grid origin set to current position', 'success');
+                } else {
+                    showNotification('Position data not available', 'error');
+                }
+            } catch (error) {
+                console.error('Set origin failed:', error);
+            }
+        }
+
+        // Canvas 2D Visualization
+        let currentRobotPos = {x: 0, y: 0};
+
+        function drawWorkspace() {
+            const canvas = document.getElementById('workspace-canvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Clear canvas
+            ctx.fillStyle = '#18181b';
+            ctx.fillRect(0, 0, width, height);
+
+            // Get grid configuration
+            const rows = parseInt(document.getElementById('grid-rows').value);
+            const cols = parseInt(document.getElementById('grid-cols').value);
+            const originX = parseFloat(document.getElementById('grid-origin-x').value);
+            const originY = parseFloat(document.getElementById('grid-origin-y').value);
+            const spacingX = parseFloat(document.getElementById('grid-spacing-x').value);
+            const spacingY = parseFloat(document.getElementById('grid-spacing-y').value);
+
+            // Calculate workspace bounds
+            const gridWidth = cols * spacingX;
+            const gridHeight = rows * spacingY;
+            const padding = 50;
+
+            // Calculate scale to fit canvas
+            const scaleX = (width - 2 * padding) / Math.max(gridWidth, Math.abs(currentRobotPos.x - originX) * 2);
+            const scaleY = (height - 2 * padding) / Math.max(gridHeight, Math.abs(currentRobotPos.y - originY) * 2);
+            const scale = Math.min(scaleX, scaleY, 2); // Max scale of 2 pixels per mm
+
+            // Center of canvas
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // Transform from world coordinates to canvas coordinates
+            function worldToCanvas(worldX, worldY) {
+                return {
+                    x: centerX + (worldX - originX) * scale,
+                    y: centerY - (worldY - originY) * scale  // Flip Y axis
+                };
+            }
+
+            // Draw coordinate axes
+            ctx.strokeStyle = '#3f3f46';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+
+            // X axis
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(width, centerY);
+            ctx.stroke();
+
+            // Y axis
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, height);
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+
+            // Draw grid cells
+            ctx.strokeStyle = '#52525b';
+            ctx.fillStyle = '#27272a';
+            ctx.lineWidth = 1;
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const cellX = originX + col * spacingX;
+                    const cellY = originY + row * spacingY;
+                    const pos = worldToCanvas(cellX, cellY);
+                    const cellWidth = spacingX * scale;
+                    const cellHeight = spacingY * scale;
+
+                    ctx.fillRect(pos.x, pos.y - cellHeight, cellWidth, cellHeight);
+                    ctx.strokeRect(pos.x, pos.y - cellHeight, cellWidth, cellHeight);
+
+                    // Draw cell coordinates
+                    ctx.fillStyle = '#52525b';
+                    ctx.font = '10px monospace';
+                    ctx.fillText(`${row},${col}`, pos.x + 2, pos.y - cellHeight + 12);
+                    ctx.fillStyle = '#27272a';
+                }
+            }
+
+            // Draw selected cell
+            if (selectedRow < rows && selectedCol < cols) {
+                const cellX = originX + selectedCol * spacingX;
+                const cellY = originY + selectedRow * spacingY;
+                const pos = worldToCanvas(cellX, cellY);
+                const cellWidth = spacingX * scale;
+                const cellHeight = spacingY * scale;
+
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(pos.x, pos.y - cellHeight, cellWidth, cellHeight);
+            }
+
+            // Draw origin point
+            const originPos = worldToCanvas(originX, originY);
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath();
+            ctx.arc(originPos.x, originPos.y, 6, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Draw origin crosshair
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(originPos.x - 10, originPos.y);
+            ctx.lineTo(originPos.x + 10, originPos.y);
+            ctx.moveTo(originPos.x, originPos.y - 10);
+            ctx.lineTo(originPos.x, originPos.y + 10);
+            ctx.stroke();
+
+            // Draw robot position
+            const robotPos = worldToCanvas(currentRobotPos.x, currentRobotPos.y);
+
+            // Robot outer circle
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(robotPos.x, robotPos.y, 10, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // Robot center
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(robotPos.x, robotPos.y, 4, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Draw robot coordinates
+            ctx.fillStyle = '#a1a1aa';
+            ctx.font = '11px sans-serif';
+            ctx.fillText(`(${currentRobotPos.x.toFixed(1)}, ${currentRobotPos.y.toFixed(1)})`,
+                         robotPos.x + 15, robotPos.y - 5);
+
+            // Draw scale reference
+            ctx.fillStyle = '#71717a';
+            ctx.font = '10px sans-serif';
+            ctx.fillText(`Scale: ${scale.toFixed(2)}px/mm`, 10, height - 10);
+        }
+
+        function updateCanvasFromStatus(status) {
+            if (status.position && status.position.length >= 2) {
+                currentRobotPos.x = status.position[0];
+                currentRobotPos.y = status.position[1];
+                drawWorkspace();
+            }
+        }
+
+        // Auto-update status every 2 seconds
+        setInterval(updateStatus, 2000);
+
+        // Initial connection attempt
+        connectRobot();
+    </script>
+</body>
+</html>
