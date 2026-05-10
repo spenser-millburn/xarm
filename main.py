@@ -1770,17 +1770,45 @@ def _make_recording_callback():
     Captures pose + joint angles + a monotonic timestamp into the
     shared buffer, drops samples once RECORDING_MAX_SAMPLES is hit
     (we don't want a forgotten recording to chew memory)."""
+    _logged_keys = [False]
+
     def _cb(item):
         global recording_active, recording_start_mono
         if not recording_active or recording_start_mono is None:
             return
+        # One-shot debug log on the first sample so we can confirm
+        # exactly what shape the SDK sends.
+        if not _logged_keys[0]:
+            _logged_keys[0] = True
+            try:
+                if isinstance(item, dict):
+                    print(f"[recording] sample keys: {list(item.keys())}")
+                    print(f"[recording] sample preview: {repr(item)[:400]}")
+                else:
+                    print(f"[recording] sample type: {type(item).__name__}")
+                    print(f"[recording] sample preview: {repr(item)[:400]}")
+            except Exception as e:
+                print(f"[recording] debug log failed: {e}")
         with recording_lock:
             if len(recording_buffer) >= RECORDING_MAX_SAMPLES:
                 return
             try:
                 t = time.monotonic() - recording_start_mono
-                pose = item.get("pose") if isinstance(item, dict) else None
-                angle = item.get("angle") if isinstance(item, dict) else None
+                # xArm SDK report-callback dict keys vary by version.
+                # Try every plausible name for the 6-DOF cartesian pose
+                # and the joint angle list.
+                pose = angle = None
+                if isinstance(item, dict):
+                    for k in ("cartesian", "pose", "tcp_pose", "position"):
+                        v = item.get(k)
+                        if v:
+                            pose = v
+                            break
+                    for k in ("joints", "angle", "angles", "joint_angles", "servo_angle"):
+                        v = item.get(k)
+                        if v:
+                            angle = v
+                            break
                 recording_buffer.append({
                     "t": t,
                     "pose": list(pose) if pose else None,
