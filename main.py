@@ -1362,7 +1362,15 @@ async def execute_circle_path(circle_req: CirclePath):
         print(f"[CIRCLE] Number of cycles: {circle_req.num_cycles}")
         print(f"[CIRCLE] Selected frequency: {frequency} Hz")
 
-        # Execute path in background thread
+        # Set the executing flag SYNCHRONOUSLY before starting the
+        # background thread so callers polling /api/path/status right
+        # after this endpoint returns observe is_executing=True
+        # immediately (the thread otherwise wouldn't set the flag
+        # until after the approach + mode-switch phase completes,
+        # leaving a race window where polling returns False and the
+        # client thinks the path already finished).
+        path_execution_active = True
+
         def run_path():
             try:
                 follow_path_servo_mode(
