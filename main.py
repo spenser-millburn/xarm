@@ -172,7 +172,10 @@ def get_arm():
     global arm
     if arm is None:
         try:
-            arm = XArmAPI(XARM_IP)
+            # report_type='rich' streams state at ~100Hz instead of the
+            # default 'normal' (~5Hz) — needed for trajectory recording
+            # to capture enough samples to plot a meaningful curve.
+            arm = XArmAPI(XARM_IP, report_type='rich')
             time.sleep(0.5)
             # Clean any warnings/errors on connect
             if arm.warn_code != 0:
