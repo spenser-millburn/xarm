@@ -1724,6 +1724,129 @@ async def get_path_status():
         "is_executing": path_execution_active
     }
 
+
+# ---------- trajectory recording ----------
+#
+# Pose/joint timeseries fed by the xArm SDK's report callback (native
+# rate, ~100Hz) so trajectory-quality assertions (overshoot, settling,
+# max velocity) don't have to poll /api/status from the test harness
+# and pay HTTP roundtrip + jitter for every sample. One recording at a
+# time; the test starts before a move and pulls /data after stop.
+
+recording_active: bool = False
+recording_buffer: List[dict] = []
+recording_start_mono: Optional[float] = None
+recording_lock = threading.Lock()
+recording_callback = None
+RECORDING_MAX_SAMPLES = 50_000  # ~8min at 100Hz; guard against leaks
+
+class RecordingSample(BaseModel):
+    t: float            # seconds since recording start (monotonic)
+    pose: Optional[List[float]] = None
+    joints: Optional[List[float]] = None
+
+class RecordingStartResponse(BaseModel):
+    status: str
+    started_at: float
+
+class RecordingStopResponse(BaseModel):
+    status: str
+    samples: int
+    duration_s: float
+
+class RecordingDataResponse(BaseModel):
+    active: bool
+    samples: List[RecordingSample]
+    count: int
+    duration_s: float
+
+
+def _make_recording_callback():
+    """Build the report-callback closure registered with the SDK.
+
+    Captures pose + joint angles + a monotonic timestamp into the
+    shared buffer, drops samples once RECORDING_MAX_SAMPLES is hit
+    (we don't want a forgotten recording to chew memory)."""
+    def _cb(item):
+        global recording_active, recording_start_mono
+        if not recording_active or recording_start_mono is None:
+            return
+        with recording_lock:
+            if len(recording_buffer) >= RECORDING_MAX_SAMPLES:
+                return
+            try:
+                t = time.monotonic() - recording_start_mono
+                pose = item.get("pose") if isinstance(item, dict) else None
+                angle = item.get("angle") if isinstance(item, dict) else None
+                recording_buffer.append({
+                    "t": t,
+                    "pose": list(pose) if pose else None,
+                    "joints": list(angle) if angle else None,
+                })
+            except Exception as e:
+                print(f"[recording] sample drop: {e}")
+    return _cb
+
+
+@app.post("/api/recording/start", response_model=RecordingStartResponse)
+async def recording_start():
+    """Start a trajectory recording.
+
+    Clears any prior buffer and registers an SDK report callback so
+    samples flow at the arm's native rate. Idempotent: starting while
+    already active resets the buffer + start time.
+    """
+    global recording_active, recording_start_mono, recording_callback
+    try:
+        robot = get_arm()
+        with recording_lock:
+            recording_buffer.clear()
+            recording_start_mono = time.monotonic()
+            if recording_callback is None:
+                recording_callback = _make_recording_callback()
+                # `register_report_callback` SDK signature: (callback,
+                # report_cartesian=True, report_joints=True, ...). We
+                # take the defaults — it pushes the full state dict.
+                robot.register_report_callback(recording_callback)
+            recording_active = True
+        return RecordingStartResponse(status="recording", started_at=time.time())
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/recording/stop", response_model=RecordingStopResponse)
+async def recording_stop():
+    """Stop the active recording. Buffer is preserved for /data."""
+    global recording_active, recording_start_mono
+    if not recording_active:
+        return RecordingStopResponse(status="idle", samples=0, duration_s=0.0)
+    with recording_lock:
+        recording_active = False
+        duration = (time.monotonic() - recording_start_mono) if recording_start_mono else 0.0
+        count = len(recording_buffer)
+    return RecordingStopResponse(
+        status="stopped",
+        samples=count,
+        duration_s=duration,
+    )
+
+
+@app.get("/api/recording/data", response_model=RecordingDataResponse)
+async def recording_data():
+    """Return the captured samples (whether the recording is still active or stopped)."""
+    with recording_lock:
+        samples = list(recording_buffer)
+        active = recording_active
+        duration = (time.monotonic() - recording_start_mono) if recording_start_mono else 0.0
+    return RecordingDataResponse(
+        active=active,
+        samples=[RecordingSample(**s) for s in samples],
+        count=len(samples),
+        duration_s=duration,
+    )
+
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
